@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">BizEntry</string>
+    <string name="app_name" translatable="false">BizEntry</string>
 
     <!-- Transaction entry screen -->
     <string name="action_send">পাঠান</string>

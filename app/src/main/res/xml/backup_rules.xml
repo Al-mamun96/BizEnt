@@ -1,13 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?><!--
-   Sample backup rules file; uncomment and customize as necessary.
-   See https://developer.android.com/guide/topics/data/autobackup
-   for details.
-   Note: This file is ignored for devices older than API 31
-   See https://developer.android.com/about/versions/12/backup-restore
+  Applies on devices older than API 31; data_extraction_rules.xml covers API 31 and above.
+
+  Only the ledger database is backed up. Naming an <include> makes the policy exclusive, so caches,
+  logs and every transient file are left out by default rather than by omission.
+
+  The whole `database` domain is included rather than the file name, so renaming the database
+  cannot silently stop the backup.
+
+  Be clear about what this does and does not buy. It controls *what* is copied; it does not make it
+  private. Android auto-backup is encrypted in transit and at rest by Google, but it is not
+  encrypted with a key only you hold, so the ledger does leave the device. Excluding the database
+  instead would keep it on the phone and lose it with the phone - keeping the backup is the
+  deliberate choice here.
 -->
 <full-backup-content>
-    <!--
-   <include domain="sharedpref" path="."/>
-   <exclude domain="sharedpref" path="device.xml"/>
--->
+    <include domain="database" path="." />
 </full-backup-content>
