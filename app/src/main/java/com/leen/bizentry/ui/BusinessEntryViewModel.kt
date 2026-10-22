@@ -9,6 +9,7 @@ import com.leen.bizentry.data.BusinessEntry
 import com.leen.bizentry.data.BusinessEntryRepository
 import com.leen.bizentry.data.DEFAULT_CATEGORY
 import com.leen.bizentry.data.Money
+import com.leen.bizentry.data.Settlement
 import com.leen.bizentry.data.TransactionType
 import com.leen.bizentry.parse.EntryParser
 import com.leen.bizentry.parse.ParsedEntry
@@ -133,6 +134,7 @@ class BusinessEntryViewModel(
                             amountMinor = draft.amountMinor,
                             currency = existing.currency ?: DEFAULT_CURRENCY,
                             type = draft.type,
+                            settlement = draft.settlement,
                             category = draft.category ?: existing.category,
                             transactionDateEpochDay = date.toEpochDay(),
                             transactionDateZone = clock.zone.id,
@@ -147,6 +149,7 @@ class BusinessEntryViewModel(
                             amountMinor = draft.amountMinor,
                             currency = DEFAULT_CURRENCY,
                             type = draft.type,
+                            settlement = draft.settlement,
                             category = draft.category ?: DEFAULT_CATEGORY,
                             transactionDateEpochDay = date.toEpochDay(),
                             transactionDateZone = clock.zone.id,
@@ -182,6 +185,12 @@ class BusinessEntryViewModel(
         message.value = null
     }
 
+    fun onDraftSettlementChange(settlement: Settlement) {
+        val draft = composer.value.draft ?: return
+        composer.value = composer.value.copy(draft = draft.copy(settlement = settlement))
+        message.value = null
+    }
+
     fun startEditing(entry: BusinessEntry) {
         composer.value = Composer(
             input = entry.rawText,
@@ -189,6 +198,7 @@ class BusinessEntryViewModel(
                 rawText = entry.rawText,
                 amountMinor = entry.amountMinor,
                 type = entry.type,
+                settlement = entry.settlement,
                 transactionDate = entry.transactionDateEpochDay?.let { LocalDate.ofEpochDay(it) },
                 category = entry.category
             ),

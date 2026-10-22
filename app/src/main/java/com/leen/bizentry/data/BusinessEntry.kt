@@ -26,6 +26,8 @@ data class BusinessEntry(
 
     val type: TransactionType = TransactionType.UNKNOWN,
 
+    val settlement: Settlement? = null,
+
     val category: String = DEFAULT_CATEGORY,
 
     val transactionDate: String = "",

@@ -10,4 +10,11 @@ class Converters {
     @TypeConverter
     fun toTransactionType(storedName: String): TransactionType =
         TransactionType.entries.firstOrNull { it.name == storedName } ?: TransactionType.UNKNOWN
+
+    @TypeConverter
+    fun fromSettlement(settlement: Settlement?): String? = settlement?.name
+
+    @TypeConverter
+    fun toSettlement(storedName: String?): Settlement? =
+        storedName?.let { name -> Settlement.entries.firstOrNull { it.name == name } }
 }

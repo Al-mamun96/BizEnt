@@ -44,6 +44,13 @@ internal object EntryKeywords {
         "diyechi", "dilam", "porishodh", "shodh", "paid"
     )
 
+    val cash = listOf("নগদ", "নগদে", "নগদি", "ক্যাশ", "nagad", "nakad", "cash")
+
+    val credit = listOf(
+        "ধার", "ধারে", "বাকি", "বাকিতে", "বাকী", "বাকীতে",
+        "dhar", "dhare", "baki", "bakite", "udhar", "credit", "due"
+    )
+
     val today = listOf("আজ", "আজকে", "aj", "aaj", "ajke")
 
     val yesterday = listOf("গতকাল", "গতকালকে", "gotokal", "gotokalke", "gato kal")

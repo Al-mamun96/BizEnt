@@ -50,7 +50,11 @@ class Migration2To3Test {
         createVersion2Database()
 
         database = Room.databaseBuilder(context, BusinessDatabase::class.java, TEST_DB)
-            .addMigrations(BusinessDatabase.MIGRATION_1_2, BusinessDatabase.MIGRATION_2_3)
+            .addMigrations(
+                BusinessDatabase.MIGRATION_1_2,
+                BusinessDatabase.MIGRATION_2_3,
+                BusinessDatabase.MIGRATION_3_4
+            )
             .allowMainThreadQueries()
             .build()
 

@@ -1,6 +1,7 @@
 package com.leen.bizentry.parse
 
 import com.leen.bizentry.data.Money
+import com.leen.bizentry.data.Settlement
 import com.leen.bizentry.data.TransactionType
 import java.time.LocalDate
 
@@ -8,6 +9,7 @@ data class ParsedEntry(
     val rawText: String,
     val amountMinor: Long?,
     val type: TransactionType,
+    val settlement: Settlement? = null,
     val transactionDate: LocalDate?,
     val category: String?
 )
@@ -56,19 +58,23 @@ object EntryParser {
         category to words.map(::matcher)
     }
 
+    private val cashMatchers = EntryKeywords.cash.map(::matcher)
+    private val creditMatchers = EntryKeywords.credit.map(::matcher)
     private val todayMatchers = EntryKeywords.today.map(::matcher)
     private val yesterdayMatchers = EntryKeywords.yesterday.map(::matcher)
     private val tomorrowMatchers = EntryKeywords.tomorrow.map(::matcher)
 
     fun parse(text: String, today: LocalDate): ParsedEntry {
         val canonical = BengaliText.canonicalize(text)
+        val type = extractType(canonical)
 
         return ParsedEntry(
             rawText = text,
             amountMinor = extractAmountMinor(
                 BengaliText.toAsciiDigits(BengaliNumberWords.replaceWithDigits(canonical))
             ),
-            type = extractType(canonical),
+            type = type,
+            settlement = extractSettlement(type, canonical),
             transactionDate = extractDate(canonical, today),
             category = extractCategory(canonical)
         )
@@ -134,6 +140,15 @@ object EntryParser {
         }
 
         return 1L
+    }
+
+    private fun extractSettlement(type: TransactionType, text: String): Settlement? = when {
+        type == TransactionType.PAYMENT_IN || type == TransactionType.PAYMENT_OUT ->
+            Settlement.CASH
+
+        cashMatchers.any { it.containsMatchIn(text) } -> Settlement.CASH
+        creditMatchers.any { it.containsMatchIn(text) } -> Settlement.CREDIT
+        else -> null
     }
 
     private fun extractType(text: String): TransactionType =

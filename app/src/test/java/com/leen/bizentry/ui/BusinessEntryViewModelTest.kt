@@ -2,6 +2,7 @@ package com.leen.bizentry.ui
 
 import com.leen.bizentry.data.BusinessEntry
 import com.leen.bizentry.data.BusinessEntryRepository
+import com.leen.bizentry.data.Settlement
 import com.leen.bizentry.data.TransactionType
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -281,6 +282,31 @@ class BusinessEntryViewModelTest {
         advanceUntilIdle()
 
         assertEquals("আজ ৫০০ টাকা", states.last().draft?.rawText)
+    }
+
+    @Test
+    fun cashOrCreditIsStoredFromTheSentence() = runTest {
+        collectStates()
+
+        viewModel.onInputChange("বাকিতে ৫০০০ টাকার কাপড় বিক্রি")
+        viewModel.send()
+        viewModel.confirmDraft()
+        advanceUntilIdle()
+
+        assertEquals(Settlement.CREDIT, repository.stored().single().settlement)
+    }
+
+    @Test
+    fun cashOrCreditCanBeCorrectedBeforeConfirming() = runTest {
+        collectStates()
+
+        viewModel.onInputChange("৫০০ টাকা বিক্রি")
+        viewModel.send()
+        viewModel.onDraftSettlementChange(Settlement.CASH)
+        viewModel.confirmDraft()
+        advanceUntilIdle()
+
+        assertEquals(Settlement.CASH, repository.stored().single().settlement)
     }
 
     private fun TestScope.collectStates(): List<BusinessEntryUiState> {
