@@ -14,6 +14,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -309,6 +310,25 @@ class BusinessEntryViewModelTest {
         assertEquals(Settlement.CASH, repository.stored().single().settlement)
     }
 
+    @Test
+    fun aFailureIsReportedByItsShapeNotByItsRawText() = runTest {
+        repository.failNextAdd = true
+        val states = collectStates()
+
+        viewModel.onInputChange("500 taka")
+        viewModel.send()
+        viewModel.confirmDraft()
+        advanceUntilIdle()
+
+        val message = states.last().message
+        assertTrue(message is EntryMessage.SaveFailed)
+        val detail = (message as EntryMessage.SaveFailed).detail
+        assertEquals("IllegalStateException", detail)
+        assertFalse(
+            "raw exception text must not reach the screen",
+            detail?.contains("storage unavailable") ?: false
+        )
+    }
     private fun TestScope.collectStates(): List<BusinessEntryUiState> {
         val states = mutableListOf<BusinessEntryUiState>()
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {

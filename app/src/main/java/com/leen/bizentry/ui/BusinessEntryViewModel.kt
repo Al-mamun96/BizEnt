@@ -161,7 +161,7 @@ class BusinessEntryViewModel(
 
                 composer.value = Composer()
             } catch (e: Exception) {
-                message.value = EntryMessage.SaveFailed(e.localizedMessage)
+                message.value = EntryMessage.SaveFailed(e::class.simpleName)
             } finally {
                 isSaving.value = false
             }
@@ -219,7 +219,7 @@ class BusinessEntryViewModel(
                 }
                 message.value = EntryMessage.Deleted
             } catch (e: Exception) {
-                message.value = EntryMessage.SaveFailed(e.localizedMessage)
+                message.value = EntryMessage.SaveFailed(e::class.simpleName)
             } finally {
                 isSaving.value = false
             }
