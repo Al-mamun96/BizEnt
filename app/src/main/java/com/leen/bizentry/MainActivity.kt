@@ -41,6 +41,7 @@ import com.leen.bizentry.data.BusinessDatabase
 import com.leen.bizentry.data.BusinessEntry
 import com.leen.bizentry.data.Money
 import com.leen.bizentry.data.RoomBusinessEntryRepository
+import com.leen.bizentry.data.Settlement
 import com.leen.bizentry.data.TransactionType
 import com.leen.bizentry.parse.EntryParser
 import com.leen.bizentry.parse.ParsedEntry
@@ -68,6 +69,12 @@ private val TransactionType.labelRes: Int
         TransactionType.PAYMENT_IN -> R.string.type_payment_in
         TransactionType.PAYMENT_OUT -> R.string.type_payment_out
         TransactionType.TRANSFER -> R.string.type_transfer
+    }
+
+private val Settlement.labelRes: Int
+    get() = when (this) {
+        Settlement.CASH -> R.string.settlement_cash
+        Settlement.CREDIT -> R.string.settlement_credit
     }
 
 class MainActivity : ComponentActivity() {
@@ -182,6 +189,7 @@ fun BusinessEntryScreen(viewModel: BusinessEntryViewModel) {
                             formatter = formatter,
                             enabled = !state.isSaving,
                             onTypeChange = viewModel::onDraftTypeChange,
+                            onSettlementChange = viewModel::onDraftSettlementChange,
                             onCategoryChange = viewModel::onDraftCategoryChange,
                             onConfirm = viewModel::confirmDraft,
                             onCancel = viewModel::cancelDraft
@@ -277,6 +285,7 @@ private fun DraftBubble(
     formatter: DateTimeFormatter,
     enabled: Boolean,
     onTypeChange: (TransactionType) -> Unit,
+    onSettlementChange: (Settlement) -> Unit,
     onCategoryChange: (String) -> Unit,
     onConfirm: () -> Unit,
     onCancel: () -> Unit
@@ -311,6 +320,17 @@ private fun DraftBubble(
             draft.transactionDate?.let { date ->
                 Text(stringResource(R.string.date_field, formatter.format(date)))
             }
+
+            CorrectionRow(
+                text = stringResource(
+                    R.string.draft_settlement,
+                    stringResource(draft.settlement?.labelRes ?: R.string.type_unset)
+                ),
+                options = Settlement.entries.map { settlement ->
+                    stringResource(settlement.labelRes) to { onSettlementChange(settlement) }
+                },
+                enabled = enabled
+            )
 
             CorrectionRow(
                 text = stringResource(

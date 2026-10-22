@@ -20,3 +20,4 @@
 - Prefers offline-first, on-device processing over cloud services: chose a fully offline rule-based parser over a cloud AI API to keep cost at zero, avoid adding network permissions, and keep his data on the phone. Confidence: 0.7
 - Prefers to avoid building or paying for backend infrastructure — picked syncing to his own Google Sheet over a custom server/backend to dodge hosting cost and maintenance. Confidence: 0.6
 - For financial data, favours correctness over speed: prefers the app echo back what it understood and get an explicit confirmation before committing a record, rather than saving a possible misread silently. Confidence: 0.6
+- Wants input kept to free text only: expects to just type a sentence and have the app infer everything (type, category, dates, cash-vs-credit) itself, and resists any design that adds forms, pickers, or steps that make him choose manually. Confidence: 0.65

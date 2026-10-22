@@ -14,6 +14,9 @@
     <string name="saving_in_progress">সংরক্ষণ হচ্ছে...</string>
 
     <!-- Transaction types -->
+    <string name="draft_settlement">নগদ/বাকি: %1$s</string>
+    <string name="settlement_cash">নগদ</string>
+    <string name="settlement_credit">বাকি</string>
     <string name="type_field">ধরন: %1$s</string>
     <string name="type_sale">বিক্রয়</string>
     <string name="type_purchase">ক্রয়</string>

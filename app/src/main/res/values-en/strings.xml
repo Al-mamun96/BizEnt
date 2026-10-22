@@ -12,6 +12,9 @@
     <string name="saving_in_progress">Saving...</string>
 
     <!-- Transaction types -->
+    <string name="draft_settlement">Cash / credit: %1$s</string>
+    <string name="settlement_cash">Cash</string>
+    <string name="settlement_credit">Credit</string>
     <string name="type_field">Type: %1$s</string>
     <string name="type_sale">Sale</string>
     <string name="type_purchase">Purchase</string>

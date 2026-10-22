@@ -5,6 +5,7 @@ import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import com.leen.bizentry.data.BusinessEntry
 import com.leen.bizentry.data.BusinessEntryRepository
@@ -79,7 +80,7 @@ class BusinessEntryScreenTest {
         render()
 
         send("500 taka khoroch")
-        compose.onNodeWithText("Save entry").performClick()
+        compose.onNodeWithText("Save entry").performScrollTo().performClick()
         compose.waitUntil(5_000) { repository.stored().isNotEmpty() }
 
         val stored = repository.stored().single()
@@ -93,9 +94,9 @@ class BusinessEntryScreenTest {
         render()
 
         send("500 taka khoroch")
-        compose.onNodeWithText("Type: Expense").performClick()
+        compose.onNodeWithText("Type: Expense").performScrollTo().performClick()
         compose.onNodeWithText("Income").performClick()
-        compose.onNodeWithText("Save entry").performClick()
+        compose.onNodeWithText("Save entry").performScrollTo().performClick()
         compose.waitUntil(5_000) { repository.stored().isNotEmpty() }
 
         assertEquals(TransactionType.INCOME, repository.stored().single().type)
@@ -106,7 +107,7 @@ class BusinessEntryScreenTest {
         render()
 
         send("500 taka khoroch")
-        compose.onNodeWithText("Cancel").performClick()
+        compose.onNodeWithText("Cancel").performScrollTo().performClick()
 
         compose.onNodeWithText("Amount: 500.00").assertDoesNotExist()
         assertTrue(repository.stored().isEmpty())
