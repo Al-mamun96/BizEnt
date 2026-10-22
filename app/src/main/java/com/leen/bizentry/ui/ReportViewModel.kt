@@ -1,7 +1,10 @@
 package com.leen.bizentry.ui
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import com.leen.bizentry.data.BusinessEntryRepository
 import com.leen.bizentry.data.CategoryTotal
 import com.leen.bizentry.data.EpochDayRange
@@ -72,5 +75,12 @@ class ReportViewModel(
                 byCategory = repository.totalsByCategory(range.from, range.to)
             )
         }
+    }
+
+    companion object {
+        fun factory(repository: BusinessEntryRepository): ViewModelProvider.Factory =
+            viewModelFactory {
+                initializer { ReportViewModel(repository) }
+            }
     }
 }

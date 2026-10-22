@@ -47,6 +47,7 @@ import com.leen.bizentry.parse.EntryParser
 import com.leen.bizentry.parse.ParsedEntry
 import com.leen.bizentry.ui.BusinessEntryViewModel
 import com.leen.bizentry.ui.EntryMessage
+import com.leen.bizentry.ui.ReportViewModel
 import com.leen.bizentry.ui.theme.BizEntryTheme
 import java.text.SimpleDateFormat
 import java.time.LocalDate
@@ -59,7 +60,7 @@ private const val FIELD_DATE_PATTERN = "dd MMM yyyy"
 
 private val selectableTypes = TransactionType.entries.filter { it != TransactionType.UNKNOWN }
 
-private val TransactionType.labelRes: Int
+internal val TransactionType.labelRes: Int
     get() = when (this) {
         TransactionType.UNKNOWN -> R.string.type_unset
         TransactionType.SALE -> R.string.type_sale
@@ -88,10 +89,38 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             BizEntryTheme {
-                val viewModel: BusinessEntryViewModel = viewModel(
+                val entryViewModel: BusinessEntryViewModel = viewModel(
                     factory = BusinessEntryViewModel.factory(repository)
                 )
-                BusinessEntryScreen(viewModel = viewModel)
+                val reportViewModel: ReportViewModel = viewModel(
+                    factory = ReportViewModel.factory(repository)
+                )
+
+                var showingReports by remember { mutableStateOf(false) }
+
+                Column(modifier = Modifier.fillMaxSize()) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        TextButton(onClick = { showingReports = false }) {
+                            Text(stringResource(R.string.nav_entries))
+                        }
+                        TextButton(onClick = { showingReports = true }) {
+                            Text(stringResource(R.string.nav_reports))
+                        }
+                    }
+
+                    Box(modifier = Modifier.weight(1f)) {
+                        if (showingReports) {
+                            ReportScreen(viewModel = reportViewModel)
+                        } else {
+                            BusinessEntryScreen(viewModel = entryViewModel)
+                        }
+                    }
+                }
             }
         }
     }

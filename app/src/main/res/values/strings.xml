@@ -43,6 +43,21 @@
     <string name="update_success">হিসাব হালনাগাদ হয়েছে</string>
     <string name="delete_success">এন্ট্রি মুছে ফেলা হয়েছে</string>
 
+    <!-- Reports -->
+    <string name="report_title">রিপোর্ট</string>
+    <string name="nav_entries">হিসাব</string>
+    <string name="nav_reports">রিপোর্ট</string>
+    <string name="period_today">আজ</string>
+    <string name="period_this_week">এই সপ্তাহ</string>
+    <string name="period_this_month">এই মাস</string>
+    <string name="period_last_month">গত মাস</string>
+    <string name="report_total">মোট: %1$s</string>
+    <string name="report_cash">নগদ এসেছে: %1$s</string>
+    <string name="report_credit">বাকি রয়ে গেছে: %1$s</string>
+    <string name="report_not_stated">পুরোনো এন্ট্রি (নগদ/বাকি লেখা নেই): %1$s</string>
+    <string name="report_by_category">খাত অনুযায়ী</string>
+    <string name="report_empty">এই সময়ের জন্য কোনো হিসাব নেই।</string>
+
     <!-- Entry list -->
     <string name="empty_state">এখনো কোনো হিসাব এন্ট্রি করা হয়নি।</string>
 </resources>

@@ -41,6 +41,21 @@
     <string name="update_success">Entry updated</string>
     <string name="delete_success">Entry deleted</string>
 
+    <!-- Reports -->
+    <string name="report_title">Reports</string>
+    <string name="nav_entries">Entries</string>
+    <string name="nav_reports">Reports</string>
+    <string name="period_today">Today</string>
+    <string name="period_this_week">This week</string>
+    <string name="period_this_month">This month</string>
+    <string name="period_last_month">Last month</string>
+    <string name="report_total">Total: %1$s</string>
+    <string name="report_cash">Cash received: %1$s</string>
+    <string name="report_credit">Still on credit: %1$s</string>
+    <string name="report_not_stated">Older entries (cash/credit not stated): %1$s</string>
+    <string name="report_by_category">By category</string>
+    <string name="report_empty">Nothing recorded for this period.</string>
+
     <!-- Entry list -->
     <string name="empty_state">No entries yet.</string>
 </resources>
