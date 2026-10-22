@@ -1,165 +1,149 @@
-
 package com.leen.bizentry
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.leen.bizentry.data.BusinessDatabase
-import com.leen.bizentry.data.BusinessEntry
-import com.leen.bizentry.data.BusinessEntryDao
+import com.leen.bizentry.data.RoomBusinessEntryRepository
+import com.leen.bizentry.ui.BusinessEntryViewModel
+import com.leen.bizentry.ui.EntryMessage
 import com.leen.bizentry.ui.theme.BizEntryTheme
-import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+
+private const val DATE_PATTERN = "dd-MM-yyyy HH:mm"
 
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val dao = BusinessDatabase.getDatabase(applicationContext)
-            .businessEntryDao()
-
-        val unknownError = getString(R.string.error_unknown)
+        val repository = RoomBusinessEntryRepository(
+            BusinessDatabase.getDatabase(applicationContext).businessEntryDao()
+        )
 
         setContent {
             BizEntryTheme {
-                BusinessEntryScreen(
-                    dao = dao,
-                    onSave = { text, onResult ->
-                        lifecycleScope.launch {
-                            try {
-                                dao.insert(BusinessEntry(rawText = text))
-                                onResult(true, null)
-                            } catch (e: Exception) {
-                                onResult(
-                                    false,
-                                    e.localizedMessage ?: unknownError
-                                )
-                            }
-                        }
-                    }
+                val viewModel: BusinessEntryViewModel = viewModel(
+                    factory = BusinessEntryViewModel.factory(repository)
                 )
+                BusinessEntryScreen(viewModel = viewModel)
             }
         }
     }
 }
 
 @Composable
-fun BusinessEntryScreen(
-    dao: BusinessEntryDao,
-    onSave: (String, (Boolean, String?) -> Unit) -> Unit
-) {
-    var entry by remember { mutableStateOf("") }
-    var message by remember { mutableStateOf("") }
-    var saving by remember { mutableStateOf(false) }
+fun BusinessEntryScreen(viewModel: BusinessEntryViewModel) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
 
-    val context = LocalContext.current
-
-    val savedEntries by dao.getAllEntries()
-        .collectAsStateWithLifecycle(initialValue = emptyList())
+    val messageText = when (val message = state.message) {
+        null -> null
+        EntryMessage.EmptyInput -> stringResource(R.string.error_empty_entry)
+        EntryMessage.Saved -> stringResource(R.string.save_success)
+        is EntryMessage.SaveFailed -> stringResource(
+            R.string.save_failed,
+            message.detail ?: stringResource(R.string.error_unknown)
+        )
+    }
 
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(20.dp),
+                .padding(horizontal = 20.dp),
+            contentPadding = PaddingValues(vertical = 20.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            Text(
-                text = stringResource(R.string.screen_title),
-                style = MaterialTheme.typography.headlineSmall
-            )
-
-            Text(stringResource(R.string.entry_hint))
-
-            OutlinedTextField(
-                value = entry,
-                onValueChange = {
-                    entry = it
-                    message = ""
-                },
-                label = { Text(stringResource(R.string.entry_label)) },
-                placeholder = {
-                    Text(stringResource(R.string.entry_placeholder))
-                },
-                modifier = Modifier.fillMaxWidth(),
-                minLines = 3,
-                enabled = !saving
-            )
-
-            Button(
-                onClick = {
-                    val text = entry.trim()
-
-                    if (text.isBlank()) {
-                        message = context.getString(R.string.error_empty_entry)
-                    } else if (!saving) {
-                        saving = true
-                        message = ""
-
-                        onSave(text) { success, error ->
-                            saving = false
-
-                            if (success) {
-                                entry = ""
-                                message = context.getString(R.string.save_success)
-                            } else {
-                                message = context.getString(
-                                    R.string.save_failed,
-                                    error ?: context.getString(R.string.error_retry)
-                                )
-                            }
-                        }
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !saving
-            ) {
+            item {
                 Text(
-                    if (saving) stringResource(R.string.saving_in_progress)
-                    else stringResource(R.string.action_save)
+                    text = stringResource(R.string.screen_title),
+                    style = MaterialTheme.typography.headlineSmall
                 )
             }
 
-            if (message.isNotBlank()) {
-                Text(message)
+            item {
+                Text(stringResource(R.string.entry_hint))
             }
 
-            HorizontalDivider()
+            item {
+                OutlinedTextField(
+                    value = state.text,
+                    onValueChange = viewModel::onTextChange,
+                    label = { Text(stringResource(R.string.entry_label)) },
+                    placeholder = { Text(stringResource(R.string.entry_placeholder)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 3,
+                    enabled = !state.isSaving
+                )
+            }
 
-            Text(
-                text = stringResource(R.string.entry_list_header, savedEntries.size),
-                style = MaterialTheme.typography.titleMedium
-            )
+            item {
+                Button(
+                    onClick = viewModel::save,
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !state.isSaving
+                ) {
+                    Text(
+                        if (state.isSaving) stringResource(R.string.saving_in_progress)
+                        else stringResource(R.string.action_save)
+                    )
+                }
+            }
 
-            if (savedEntries.isEmpty()) {
-                Text(stringResource(R.string.empty_state))
+            if (messageText != null) {
+                item { Text(messageText) }
+            }
+
+            item { HorizontalDivider() }
+
+            item {
+                Text(
+                    text = stringResource(R.string.entry_list_header, state.entries.size),
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
+
+            if (state.entries.isEmpty()) {
+                item { Text(stringResource(R.string.empty_state)) }
             } else {
-                savedEntries.forEachIndexed { index, item ->
+                itemsIndexed(state.entries, key = { _, entry -> entry.id }) { index, entry ->
                     Card(modifier = Modifier.fillMaxWidth()) {
                         Column(
                             modifier = Modifier.padding(14.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Text("${index + 1}. ${item.rawText}")
+                            Text("${index + 1}. ${entry.rawText}")
 
                             Text(
-                                text = java.text.SimpleDateFormat(
-                                    "dd-MM-yyyy HH:mm",
-                                    java.util.Locale.getDefault()
-                                ).format(java.util.Date(item.createdAt)),
+                                text = SimpleDateFormat(
+                                    DATE_PATTERN,
+                                    Locale.getDefault()
+                                ).format(Date(entry.createdAt)),
                                 style = MaterialTheme.typography.bodySmall
                             )
                         }

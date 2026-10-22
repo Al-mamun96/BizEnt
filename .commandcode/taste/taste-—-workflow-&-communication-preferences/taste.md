@@ -11,3 +11,5 @@
 - Expects Git commits to be authored under his own name (almamun), not the machine's default/global Git identity, and corrects authorship rather than accepting the preconfigured identity. Confidence: 0.65
 - Prefers to run Git/config commands that change identity or repository settings himself rather than letting the agent execute them; when such a command is denied, hand over the exact commands and carry on with the steps that don't need them. Confidence: 0.7
 - Wants version control backed by a remote GitHub repository on his own account (Al-mamun96), and supplies the remote URL expecting the agent to wire up `origin` and prepare the branch for pushing. Confidence: 0.6
+- Treats pushing to a remote as a shared-state action that requires his explicit go-ahead — the agent should stop after committing (or preparing the branch) rather than pushing on its own, and only pushes when he says so. Confidence: 0.75
+- Communicates decisions tersely: short single-word directives (e.g. "continue", "commit", "push") or selecting a lettered option from the agent's offered choices, expecting the agent to act on it without needing elaboration. Confidence: 0.7

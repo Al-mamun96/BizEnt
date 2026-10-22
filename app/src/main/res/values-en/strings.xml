@@ -11,7 +11,6 @@
     <string name="error_empty_entry">Please write an entry first</string>
     <string name="save_success">Entry saved successfully</string>
     <string name="save_failed">Could not save: %1$s</string>
-    <string name="error_retry">Please try again</string>
     <string name="error_unknown">Something went wrong</string>
 
     <!-- Entry list -->
