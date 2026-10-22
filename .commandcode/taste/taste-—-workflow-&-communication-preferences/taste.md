@@ -1,0 +1,11 @@
+# Taste — Workflow & Communication Preferences
+- Prefers incremental, phased development on top of existing working code — never recreate or rewrite the project from scratch; inspect the whole project before editing and avoid overwriting working code unnecessarily. Confidence: 0.85
+- Requires an approval gate before starting each major phase, and expects the agent to stop and ask before any decision affecting data integrity, privacy, cost, architecture, or irreversible operations. Confidence: 0.85
+- Insists on honest verification: never claim a feature works unless it was actually tested, and build/test after each logical change. Confidence: 0.9
+- Wants plain-English phase summaries covering files changed, tests performed, risks, results, and how the user can test the change. Confidence: 0.8
+- Wants a safe source-control checkpoint (e.g. git commit) before each major phase, with no destructive resets of the repository or the user's data. Confidence: 0.85
+- Security/privacy conscious: no secrets, OAuth tokens, passwords, or private keys in source, logs, or APKs; request the minimum permissions and keep sensitive data out of production logs. Confidence: 0.85
+- Avoids paid APIs and premature monetization, ads, or analytics; wants cost and privacy implications explained before such services are added. Confidence: 0.8
+- Prefers stable, compatible dependency versions and verifying compatibility before upgrading anything. Confidence: 0.75
+- Prefers work be broken into small steps rather than implementing several major phases at once. Confidence: 0.8
+- Expects Git commits to be authored under his own name (almamun), not the machine's default/global Git identity, and corrects authorship rather than accepting the preconfigured identity. Confidence: 0.65
