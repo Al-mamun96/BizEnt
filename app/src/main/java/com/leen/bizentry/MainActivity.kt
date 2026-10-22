@@ -10,6 +10,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
@@ -27,6 +29,8 @@ class MainActivity : ComponentActivity() {
         val dao = BusinessDatabase.getDatabase(applicationContext)
             .businessEntryDao()
 
+        val unknownError = getString(R.string.error_unknown)
+
         setContent {
             BizEntryTheme {
                 BusinessEntryScreen(
@@ -39,7 +43,7 @@ class MainActivity : ComponentActivity() {
                             } catch (e: Exception) {
                                 onResult(
                                     false,
-                                    e.localizedMessage ?: "অজানা সমস্যা হয়েছে"
+                                    e.localizedMessage ?: unknownError
                                 )
                             }
                         }
@@ -59,6 +63,8 @@ fun BusinessEntryScreen(
     var message by remember { mutableStateOf("") }
     var saving by remember { mutableStateOf(false) }
 
+    val context = LocalContext.current
+
     val savedEntries by dao.getAllEntries()
         .collectAsStateWithLifecycle(initialValue = emptyList())
 
@@ -72,11 +78,11 @@ fun BusinessEntryScreen(
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Text(
-                text = "আমার ব্যবসার হিসাব",
+                text = stringResource(R.string.screen_title),
                 style = MaterialTheme.typography.headlineSmall
             )
 
-            Text("বাংলা অথবা Banglish-এ হিসাব লিখুন")
+            Text(stringResource(R.string.entry_hint))
 
             OutlinedTextField(
                 value = entry,
@@ -84,9 +90,9 @@ fun BusinessEntryScreen(
                     entry = it
                     message = ""
                 },
-                label = { Text("হিসাবের বিবরণ") },
+                label = { Text(stringResource(R.string.entry_label)) },
                 placeholder = {
-                    Text("যেমন: আজ ৫০০০ টাকার কাপড় কিনেছি")
+                    Text(stringResource(R.string.entry_placeholder))
                 },
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 3,
@@ -98,7 +104,7 @@ fun BusinessEntryScreen(
                     val text = entry.trim()
 
                     if (text.isBlank()) {
-                        message = "আগে হিসাব লিখুন"
+                        message = context.getString(R.string.error_empty_entry)
                     } else if (!saving) {
                         saving = true
                         message = ""
@@ -108,9 +114,12 @@ fun BusinessEntryScreen(
 
                             if (success) {
                                 entry = ""
-                                message = "হিসাব সফলভাবে সংরক্ষিত হয়েছে"
+                                message = context.getString(R.string.save_success)
                             } else {
-                                message = "সংরক্ষণ হয়নি: ${error ?: "আবার চেষ্টা করুন"}"
+                                message = context.getString(
+                                    R.string.save_failed,
+                                    error ?: context.getString(R.string.error_retry)
+                                )
                             }
                         }
                     }
@@ -119,8 +128,8 @@ fun BusinessEntryScreen(
                 enabled = !saving
             ) {
                 Text(
-                    if (saving) "সংরক্ষণ হচ্ছে..."
-                    else "হিসাব Save করুন"
+                    if (saving) stringResource(R.string.saving_in_progress)
+                    else stringResource(R.string.action_save)
                 )
             }
 
@@ -131,12 +140,12 @@ fun BusinessEntryScreen(
             HorizontalDivider()
 
             Text(
-                text = "এন্ট্রির তালিকা (${savedEntries.size})",
+                text = stringResource(R.string.entry_list_header, savedEntries.size),
                 style = MaterialTheme.typography.titleMedium
             )
 
             if (savedEntries.isEmpty()) {
-                Text("এখনো কোনো হিসাব এন্ট্রি করা হয়নি।")
+                Text(stringResource(R.string.empty_state))
             } else {
                 savedEntries.forEachIndexed { index, item ->
                     Card(modifier = Modifier.fillMaxWidth()) {

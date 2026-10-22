@@ -9,3 +9,5 @@
 - Prefers stable, compatible dependency versions and verifying compatibility before upgrading anything. Confidence: 0.75
 - Prefers work be broken into small steps rather than implementing several major phases at once. Confidence: 0.8
 - Expects Git commits to be authored under his own name (almamun), not the machine's default/global Git identity, and corrects authorship rather than accepting the preconfigured identity. Confidence: 0.65
+- Prefers to run Git/config commands that change identity or repository settings himself rather than letting the agent execute them; when such a command is denied, hand over the exact commands and carry on with the steps that don't need them. Confidence: 0.7
+- Wants version control backed by a remote GitHub repository on his own account (Al-mamun96), and supplies the remote URL expecting the agent to wire up `origin` and prepare the branch for pushing. Confidence: 0.6

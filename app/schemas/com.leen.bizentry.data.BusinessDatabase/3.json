@@ -1,0 +1,165 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 3,
+    "identityHash": "ab7417e9ad77cc4ce42240500d52206d",
+    "entities": [
+      {
+        "tableName": "business_entries",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `rawText` TEXT NOT NULL, `amount` REAL, `type` TEXT NOT NULL, `category` TEXT NOT NULL, `transactionDate` TEXT NOT NULL, `paymentMethod` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `amountMinor` INTEGER, `currency` TEXT, `transactionDateEpochDay` INTEGER, `transactionDateZone` TEXT, `notes` TEXT, `party` TEXT, `reference` TEXT, `paymentStatus` TEXT, `dueAmountMinor` INTEGER, `settlesTransactionId` INTEGER, `updatedAt` INTEGER)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "rawText",
+            "columnName": "rawText",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "amount",
+            "columnName": "amount",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "type",
+            "columnName": "type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "category",
+            "columnName": "category",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "transactionDate",
+            "columnName": "transactionDate",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "paymentMethod",
+            "columnName": "paymentMethod",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "amountMinor",
+            "columnName": "amountMinor",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "currency",
+            "columnName": "currency",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "transactionDateEpochDay",
+            "columnName": "transactionDateEpochDay",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "transactionDateZone",
+            "columnName": "transactionDateZone",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "notes",
+            "columnName": "notes",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "party",
+            "columnName": "party",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "reference",
+            "columnName": "reference",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "paymentStatus",
+            "columnName": "paymentStatus",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "dueAmountMinor",
+            "columnName": "dueAmountMinor",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "settlesTransactionId",
+            "columnName": "settlesTransactionId",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_business_entries_transactionDateEpochDay",
+            "unique": false,
+            "columnNames": [
+              "transactionDateEpochDay"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_business_entries_transactionDateEpochDay` ON `${TABLE_NAME}` (`transactionDateEpochDay`)"
+          },
+          {
+            "name": "index_business_entries_type",
+            "unique": false,
+            "columnNames": [
+              "type"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_business_entries_type` ON `${TABLE_NAME}` (`type`)"
+          },
+          {
+            "name": "index_business_entries_category",
+            "unique": false,
+            "columnNames": [
+              "category"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_business_entries_category` ON `${TABLE_NAME}` (`category`)"
+          },
+          {
+            "name": "index_business_entries_paymentMethod",
+            "unique": false,
+            "columnNames": [
+              "paymentMethod"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_business_entries_paymentMethod` ON `${TABLE_NAME}` (`paymentMethod`)"
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'ab7417e9ad77cc4ce42240500d52206d')"
+    ]
+  }
+}

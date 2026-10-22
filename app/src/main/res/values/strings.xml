@@ -1,3 +1,22 @@
 <resources>
     <string name="app_name">BizEntry</string>
+
+    <!-- Transaction entry screen -->
+    <string name="screen_title">আমার ব্যবসার হিসাব</string>
+    <string name="entry_hint">বাংলা অথবা Banglish-এ হিসাব লিখুন</string>
+    <string name="entry_label">হিসাবের বিবরণ</string>
+    <string name="entry_placeholder">যেমন: আজ ৫০০০ টাকার কাপড় কিনেছি</string>
+    <string name="action_save">হিসাব Save করুন</string>
+    <string name="saving_in_progress">সংরক্ষণ হচ্ছে...</string>
+
+    <!-- Result messages -->
+    <string name="error_empty_entry">আগে হিসাব লিখুন</string>
+    <string name="save_success">হিসাব সফলভাবে সংরক্ষিত হয়েছে</string>
+    <string name="save_failed">সংরক্ষণ হয়নি: %1$s</string>
+    <string name="error_retry">আবার চেষ্টা করুন</string>
+    <string name="error_unknown">অজানা সমস্যা হয়েছে</string>
+
+    <!-- Entry list -->
+    <string name="entry_list_header">এন্ট্রির তালিকা (%1$d)</string>
+    <string name="empty_state">এখনো কোনো হিসাব এন্ট্রি করা হয়নি।</string>
 </resources>
