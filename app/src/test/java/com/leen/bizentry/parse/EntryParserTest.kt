@@ -125,6 +125,24 @@ class EntryParserTest {
     }
 
     @Test
+    fun readsBengaliNumberWords() {
+        assertEquals(500_000L, EntryParser.parse("পাঁচ হাজার টাকা", today).amountMinor)
+        assertEquals(200_000L, EntryParser.parse("দুই হাজার টাকা", today).amountMinor)
+        assertEquals(10_000L, EntryParser.parse("একশ টাকা", today).amountMinor)
+        assertEquals(50_000L, EntryParser.parse("পাঁচশ টাকা", today).amountMinor)
+    }
+
+    @Test
+    fun readsFractionalNumberWords() {
+        assertEquals(150_000L, EntryParser.parse("দেড় হাজার টাকা", today).amountMinor)
+    }
+
+    @Test
+    fun readsBanglishNumberWords() {
+        assertEquals(500_000L, EntryParser.parse("panch hajar taka", today).amountMinor)
+    }
+
+    @Test
     fun keepsTheOriginalTextSoEntriesCanBeReanalysedLater() {
         val text = "আজ ৫০০০ টাকার কাপড় কিনেছি"
 

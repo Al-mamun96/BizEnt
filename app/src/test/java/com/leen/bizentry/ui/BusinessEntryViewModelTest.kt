@@ -6,13 +6,13 @@ import com.leen.bizentry.data.TransactionType
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -28,181 +28,162 @@ class BusinessEntryViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
+    private val today = LocalDate.of(2026, 10, 22)
+
     private lateinit var repository: FakeBusinessEntryRepository
     private lateinit var viewModel: BusinessEntryViewModel
 
     @Before
     fun setUp() {
         repository = FakeBusinessEntryRepository()
-        viewModel = BusinessEntryViewModel(repository)
-    }
-
-    @Test
-    fun savingStoresTheTrimmedTextAndClearsTheInput() = runTest {
-        val states = collectStates()
-
-        viewModel.onTextChange("  paid rent  ")
-        viewModel.save()
-        advanceUntilIdle()
-
-        assertEquals(listOf("paid rent"), repository.storedTexts())
-        assertEquals("", states.last().text)
-        assertEquals(EntryMessage.Saved, states.last().message)
-        assertFalse(states.last().isSaving)
-    }
-
-    @Test
-    fun savingBlankInputReportsEmptyInputAndStoresNothing() = runTest {
-        val states = collectStates()
-
-        viewModel.onTextChange("   ")
-        viewModel.save()
-        advanceUntilIdle()
-
-        assertTrue(repository.storedTexts().isEmpty())
-        assertEquals(EntryMessage.EmptyInput, states.last().message)
-    }
-
-    @Test
-    fun aFailedSaveKeepsTheTextSoNothingIsLost() = runTest {
-        repository.failNextAdd = true
-        val states = collectStates()
-
-        viewModel.onTextChange("paid rent")
-        viewModel.save()
-        advanceUntilIdle()
-
-        assertEquals("paid rent", states.last().text)
-        assertTrue(states.last().message is EntryMessage.SaveFailed)
-        assertFalse(states.last().isSaving)
-    }
-
-    @Test
-    fun storedEntriesReachTheUiState() = runTest {
-        repository.seed(BusinessEntry(rawText = "existing entry", createdAt = 1))
-        val states = collectStates()
-        advanceUntilIdle()
-
-        assertEquals(listOf("existing entry"), states.last().entries.map { it.rawText })
-    }
-
-    @Test
-    fun typingClearsAPreviousMessage() = runTest {
-        val states = collectStates()
-
-        viewModel.onTextChange("   ")
-        viewModel.save()
-        advanceUntilIdle()
-        viewModel.onTextChange("now something")
-        advanceUntilIdle()
-
-        assertEquals(null, states.last().message)
-    }
-
-    @Test
-    fun anUnparseableAmountBlocksTheSaveAndReportsIt() = runTest {
-        val states = collectStates()
-
-        viewModel.onTextChange("paid rent")
-        viewModel.onAmountChange("12.345")
-        viewModel.save()
-        advanceUntilIdle()
-
-        assertTrue(repository.storedTexts().isEmpty())
-        assertEquals(EntryMessage.AmountInvalid, states.last().message)
-    }
-
-    @Test
-    fun aValidAmountIsStoredAsMinorUnitsAndClearsTheAmountField() = runTest {
-        val states = collectStates()
-
-        viewModel.onTextChange("paid rent")
-        viewModel.onAmountChange("5000.50")
-        viewModel.save()
-        advanceUntilIdle()
-
-        assertEquals(listOf(500_050L), repository.storedAmounts())
-        assertEquals("", states.last().amountInput)
-    }
-
-    @Test
-    fun anEntryWithNoAmountKeepsANullAmountAndCurrency() = runTest {
-        collectStates()
-
-        viewModel.onTextChange("just a note")
-        viewModel.save()
-        advanceUntilIdle()
-
-        val stored = repository.storedEntry()!!
-        assertEquals(null, stored.amountMinor)
-        assertEquals(null, stored.currency)
-    }
-
-    @Test
-    fun theDateDefaultsToTodayInTheDeviceZone() = runTest {
-        val dhaka = ZoneId.of("Asia/Dhaka")
-        val fixedClock = Clock.fixed(Instant.parse("2026-10-21T20:00:00Z"), dhaka)
-        val dated = BusinessEntryViewModel(repository, fixedClock)
-        val states = collectStatesFor(dated)
-
-        advanceUntilIdle()
-
-        assertEquals(
-            LocalDate.of(2026, 10, 22).toEpochDay(),
-            states.last().transactionDateEpochDay
+        viewModel = BusinessEntryViewModel(
+            repository,
+            Clock.fixed(Instant.parse("2026-10-22T09:00:00Z"), ZoneId.of("Asia/Dhaka"))
         )
     }
 
     @Test
-    fun theChosenDateZoneAndTimestampAreStoredWithTheEntry() = runTest {
-        val dhaka = ZoneId.of("Asia/Dhaka")
-        val fixedClock = Clock.fixed(Instant.parse("2026-10-22T09:00:00Z"), dhaka)
-        val dated = BusinessEntryViewModel(repository, fixedClock)
-        collectStatesFor(dated)
+    fun nothingIsStoredUntilTheReadingIsConfirmed() = runTest {
+        val states = collectStates()
 
-        dated.onTextChange("paid rent")
-        dated.onDateChange(LocalDate.of(2026, 10, 20))
-        dated.save()
+        viewModel.onInputChange("আজ ৫০০০ টাকার কাপড় কিনেছি")
+        viewModel.send()
         advanceUntilIdle()
 
-        val stored = repository.storedEntry()!!
-        assertEquals(LocalDate.of(2026, 10, 20).toEpochDay(), stored.transactionDateEpochDay!!)
-        assertEquals("Asia/Dhaka", stored.transactionDateZone)
-        assertEquals(fixedClock.millis(), stored.createdAt)
+        assertTrue("a draft must never be stored on its own", repository.stored().isEmpty())
+        assertEquals(500_000L, states.last().draft?.amountMinor)
     }
 
     @Test
-    fun theChosenTypeIsStoredWithTheEntry() = runTest {
+    fun confirmingStoresEverythingTheSentenceWasReadFor() = runTest {
+        val states = collectStates()
+
+        viewModel.onInputChange("আজ ৫০০০ টাকার কাপড় কিনেছি")
+        viewModel.send()
+        viewModel.confirmDraft()
+        advanceUntilIdle()
+
+        val stored = repository.stored().single()
+        assertEquals("আজ ৫০০০ টাকার কাপড় কিনেছি", stored.rawText)
+        assertEquals(500_000L, stored.amountMinor)
+        assertEquals(TransactionType.PURCHASE, stored.type)
+        assertEquals("কাপড়", stored.category)
+        assertEquals(today.toEpochDay(), stored.transactionDateEpochDay!!)
+        assertEquals("Asia/Dhaka", stored.transactionDateZone)
+        assertEquals("BDT", stored.currency)
+        assertEquals(EntryMessage.Saved, states.last().message)
+        assertEquals(null, states.last().draft)
+        assertEquals("", states.last().input)
+    }
+
+    @Test
+    fun anUnreadableAmountIsAskedForAndThenAccepted() = runTest {
+        val states = collectStates()
+
+        viewModel.onInputChange("চাল কিনেছি")
+        viewModel.send()
+        advanceUntilIdle()
+
+        assertEquals(EntryMessage.AmountNotFound, states.last().message)
+        assertEquals(null, states.last().draft?.amountMinor)
+
+        viewModel.onInputChange("৫০০")
+        viewModel.send()
+        advanceUntilIdle()
+
+        assertEquals(50_000L, states.last().draft?.amountMinor)
+        assertEquals(null, states.last().message)
+    }
+
+    @Test
+    fun theAnsweredAmountIsFoldedIntoTheStoredSentence() = runTest {
         collectStates()
 
-        viewModel.onTextChange("sold cloth")
-        viewModel.onTypeChange(TransactionType.SALE)
-        viewModel.save()
+        viewModel.onInputChange("চাল কিনেছি")
+        viewModel.send()
+        viewModel.onInputChange("৫০০")
+        viewModel.send()
+        viewModel.confirmDraft()
         advanceUntilIdle()
 
-        assertEquals(TransactionType.SALE, repository.storedEntry()!!.type)
+        assertEquals("চাল কিনেছি ৫০০", repository.stored().single().rawText)
     }
 
     @Test
-    fun theTypeStartsOnExpenseAndKeepsTheChosenValueAfterSaving() = runTest {
+    fun anAnswerThatIsNotAnAmountIsRefused() = runTest {
         val states = collectStates()
-        assertEquals(TransactionType.EXPENSE, states.last().type)
 
-        viewModel.onTextChange("consulting fee")
-        viewModel.onTypeChange(TransactionType.INCOME)
-        viewModel.save()
+        viewModel.onInputChange("চাল কিনেছি")
+        viewModel.send()
+        advanceUntilIdle()
+        viewModel.onInputChange("জানি না")
+        viewModel.send()
         advanceUntilIdle()
 
-        assertEquals(TransactionType.INCOME, states.last().type)
+        assertEquals(EntryMessage.AmountInvalid, states.last().message)
     }
 
     @Test
-    fun editingLoadsTheEntryIntoTheForm() = runTest {
+    fun aDraftWithNoAmountCannotBeConfirmed() = runTest {
+        val states = collectStates()
+
+        viewModel.onInputChange("চাল কিনেছি")
+        viewModel.send()
+        advanceUntilIdle()
+        viewModel.confirmDraft()
+        advanceUntilIdle()
+
+        assertTrue(repository.stored().isEmpty())
+        assertEquals(EntryMessage.AmountNotFound, states.last().message)
+    }
+
+    @Test
+    fun cancellingThrowsTheDraftAway() = runTest {
+        val states = collectStates()
+
+        viewModel.onInputChange("আজ ৫০০ টাকা খরচ")
+        viewModel.send()
+        viewModel.cancelDraft()
+        advanceUntilIdle()
+
+        assertTrue(repository.stored().isEmpty())
+        assertEquals(null, states.last().draft)
+        assertEquals("", states.last().input)
+    }
+
+    @Test
+    fun sendingNothingIsReportedAndInventsNoDraft() = runTest {
+        val states = collectStates()
+
+        viewModel.onInputChange("   ")
+        viewModel.send()
+        advanceUntilIdle()
+
+        assertEquals(EntryMessage.EmptyInput, states.last().message)
+        assertEquals(null, states.last().draft)
+    }
+
+    @Test
+    fun aFailedSaveKeepsTheDraftSoNothingIsLost() = runTest {
+        repository.failNextAdd = true
+        val states = collectStates()
+
+        viewModel.onInputChange("আজ ৫০০ টাকা খরচ")
+        viewModel.send()
+        viewModel.confirmDraft()
+        advanceUntilIdle()
+
+        assertTrue(states.last().message is EntryMessage.SaveFailed)
+        assertEquals(50_000L, states.last().draft?.amountMinor)
+    }
+
+    @Test
+    fun editingReadsTheStoredEntryBackIntoTheComposer() = runTest {
         repository.seed(
             BusinessEntry(
                 id = 7,
                 rawText = "sold cloth",
-                amountMinor = 500_050L,
+                amountMinor = 500_000L,
                 type = TransactionType.SALE,
                 transactionDateEpochDay = 20_000L
             )
@@ -213,64 +194,28 @@ class BusinessEntryViewModelTest {
         viewModel.startEditing(repository.stored().first())
         advanceUntilIdle()
 
-        val last = states.last()
-        assertEquals("sold cloth", last.text)
-        assertEquals("5000.50", last.amountInput)
-        assertEquals(TransactionType.SALE, last.type)
-        assertEquals(20_000L, last.transactionDateEpochDay)
-        assertEquals(7L, last.editingId)
+        assertEquals(7L, states.last().editingId)
+        assertEquals(500_000L, states.last().draft?.amountMinor)
+        assertEquals("sold cloth", states.last().input)
     }
 
     @Test
-    fun savingWhileEditingUpdatesInPlaceInsteadOfAddingARow() = runTest {
+    fun confirmingAnEditUpdatesInPlaceInsteadOfAddingARow() = runTest {
         repository.seed(BusinessEntry(id = 7, rawText = "sold cloth", amountMinor = 500_000L))
         val states = collectStates()
         advanceUntilIdle()
 
         viewModel.startEditing(repository.stored().first())
-        viewModel.onTextChange("sold cloth corrected")
-        viewModel.save()
+        viewModel.onInputChange("আজ ৭০০ টাকা কাপড় বিক্রি")
+        viewModel.send()
+        viewModel.confirmDraft()
         advanceUntilIdle()
 
         assertEquals(1, repository.stored().size)
-        assertEquals("sold cloth corrected", repository.stored().single().rawText)
-        assertTrue(repository.stored().single().updatedAt != null)
+        val stored = repository.stored().single()
+        assertEquals(70_000L, stored.amountMinor)
+        assertEquals(TransactionType.SALE, stored.type)
         assertEquals(EntryMessage.Updated, states.last().message)
-        assertEquals(null, states.last().editingId)
-    }
-
-    @Test
-    fun cancellingAnEditLeavesTheStoredEntryAlone() = runTest {
-        repository.seed(BusinessEntry(id = 7, rawText = "sold cloth"))
-        val states = collectStates()
-        advanceUntilIdle()
-
-        viewModel.startEditing(repository.stored().first())
-        viewModel.onTextChange("half typed")
-        viewModel.cancelEditing()
-        advanceUntilIdle()
-
-        assertEquals("sold cloth", repository.stored().single().rawText)
-        assertEquals("", states.last().text)
-        assertEquals(null, states.last().editingId)
-    }
-
-    @Test
-    fun editingALegacyEntryWithNoDateFallsBackToToday() = runTest {
-        val dhaka = ZoneId.of("Asia/Dhaka")
-        val fixedClock = Clock.fixed(Instant.parse("2026-10-22T09:00:00Z"), dhaka)
-        val dated = BusinessEntryViewModel(repository, fixedClock)
-        repository.seed(BusinessEntry(id = 7, rawText = "legacy row"))
-        val states = collectStatesFor(dated)
-        advanceUntilIdle()
-
-        dated.startEditing(repository.stored().first())
-        advanceUntilIdle()
-
-        assertEquals(
-            LocalDate.of(2026, 10, 22).toEpochDay(),
-            states.last().transactionDateEpochDay
-        )
     }
 
     @Test
@@ -287,28 +232,61 @@ class BusinessEntryViewModelTest {
     }
 
     @Test
-    fun deletingTheEntryBeingEditedAlsoLeavesEditMode() = runTest {
-        repository.seed(BusinessEntry(id = 7, rawText = "sold cloth"))
+    fun entriesReadOldestFirstSoTheTranscriptFlowsLikeAChat() = runTest {
+        repository.seed(BusinessEntry(id = 1, rawText = "older", createdAt = 1))
+        repository.seed(BusinessEntry(id = 2, rawText = "newer", createdAt = 2))
         val states = collectStates()
         advanceUntilIdle()
 
-        viewModel.startEditing(repository.stored().first())
-        viewModel.delete(repository.stored().first())
-        advanceUntilIdle()
-
-        assertEquals(null, states.last().editingId)
-        assertEquals("", states.last().text)
+        assertEquals(listOf("older", "newer"), states.last().entries.map { it.rawText })
     }
 
-    private fun TestScope.collectStates(): List<BusinessEntryUiState> =
-        collectStatesFor(viewModel)
+    @Test
+    fun theTypeCanBeCorrectedBeforeConfirming() = runTest {
+        val states = collectStates()
 
-    private fun TestScope.collectStatesFor(
-        target: BusinessEntryViewModel
-    ): List<BusinessEntryUiState> {
+        viewModel.onInputChange("আজ ৫০০ টাকা")
+        viewModel.send()
+        advanceUntilIdle()
+
+        assertEquals(TransactionType.UNKNOWN, states.last().draft?.type)
+
+        viewModel.onDraftTypeChange(TransactionType.INCOME)
+        viewModel.confirmDraft()
+        advanceUntilIdle()
+
+        assertEquals(TransactionType.INCOME, repository.stored().single().type)
+    }
+
+    @Test
+    fun theCategoryCanBeCorrectedBeforeConfirming() = runTest {
+        collectStates()
+
+        viewModel.onInputChange("আজ ৫০০ টাকা")
+        viewModel.send()
+        viewModel.onDraftCategoryChange("বেতন")
+        viewModel.confirmDraft()
+        advanceUntilIdle()
+
+        assertEquals("বেতন", repository.stored().single().category)
+    }
+
+    @Test
+    fun correctingADraftLeavesTheOriginalSentenceAlone() = runTest {
+        val states = collectStates()
+
+        viewModel.onInputChange("আজ ৫০০ টাকা")
+        viewModel.send()
+        viewModel.onDraftTypeChange(TransactionType.INCOME)
+        advanceUntilIdle()
+
+        assertEquals("আজ ৫০০ টাকা", states.last().draft?.rawText)
+    }
+
+    private fun TestScope.collectStates(): List<BusinessEntryUiState> {
         val states = mutableListOf<BusinessEntryUiState>()
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-            target.uiState.collect { states += it }
+            viewModel.uiState.collect { states += it }
         }
         return states
     }
@@ -320,7 +298,8 @@ private class FakeBusinessEntryRepository : BusinessEntryRepository {
 
     var failNextAdd = false
 
-    override val allEntries: Flow<List<BusinessEntry>> = entries
+    override val allEntries: Flow<List<BusinessEntry>> =
+        entries.map { stored -> stored.sortedByDescending { it.createdAt } }
 
     override suspend fun add(entry: BusinessEntry): Long {
         if (failNextAdd) {
@@ -328,7 +307,7 @@ private class FakeBusinessEntryRepository : BusinessEntryRepository {
             throw IllegalStateException("storage unavailable")
         }
         val stored = entry.copy(id = (entries.value.maxOfOrNull { it.id } ?: 0L) + 1L)
-        entries.value = listOf(stored) + entries.value
+        entries.value = entries.value + stored
         return stored.id
     }
 
@@ -348,12 +327,6 @@ private class FakeBusinessEntryRepository : BusinessEntryRepository {
     fun seed(entry: BusinessEntry) {
         entries.value = entries.value + entry
     }
-
-    fun storedTexts(): List<String> = entries.value.map { it.rawText }
-
-    fun storedAmounts(): List<Long?> = entries.value.map { it.amountMinor }
-
-    fun storedEntry(): BusinessEntry? = entries.value.firstOrNull()
 
     fun stored(): List<BusinessEntry> = entries.value
 }

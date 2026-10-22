@@ -30,6 +30,8 @@ private const val TAIL_LENGTH = 24
  */
 object EntryParser {
 
+    val knownCategories: List<String> = EntryKeywords.categories.map { (category, _) -> category }
+
     private val NUMBER = Regex("""\d[\d,]*(?:\.\d+)?""")
     private val DATE_SHAPED = Regex("""\d{1,4}[./-]\d{1,2}[./-]\d{2,4}""")
 
@@ -63,7 +65,9 @@ object EntryParser {
 
         return ParsedEntry(
             rawText = text,
-            amountMinor = extractAmountMinor(BengaliText.toAsciiDigits(canonical)),
+            amountMinor = extractAmountMinor(
+                BengaliText.toAsciiDigits(BengaliNumberWords.replaceWithDigits(canonical))
+            ),
             type = extractType(canonical),
             transactionDate = extractDate(canonical, today),
             category = extractCategory(canonical)

@@ -7,8 +7,11 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.leen.bizentry.data.BusinessEntry
 import com.leen.bizentry.data.BusinessEntryRepository
+import com.leen.bizentry.data.DEFAULT_CATEGORY
 import com.leen.bizentry.data.Money
 import com.leen.bizentry.data.TransactionType
+import com.leen.bizentry.parse.EntryParser
+import com.leen.bizentry.parse.ParsedEntry
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -22,6 +25,7 @@ private const val DEFAULT_CURRENCY = "BDT"
 
 sealed interface EntryMessage {
     data object EmptyInput : EntryMessage
+    data object AmountNotFound : EntryMessage
     data object AmountInvalid : EntryMessage
     data object Saved : EntryMessage
     data object Updated : EntryMessage
@@ -31,87 +35,165 @@ sealed interface EntryMessage {
 
 data class BusinessEntryUiState(
     val entries: List<BusinessEntry> = emptyList(),
-    val text: String = "",
-    val amountInput: String = "",
-    val type: TransactionType = TransactionType.EXPENSE,
-    val transactionDateEpochDay: Long = 0L,
+    val input: String = "",
+    val draft: ParsedEntry? = null,
     val editingId: Long? = null,
     val isSaving: Boolean = false,
     val message: EntryMessage? = null
 )
 
-private data class EntryForm(
-    val text: String = "",
-    val amountInput: String = "",
-    val type: TransactionType = TransactionType.EXPENSE,
-    val transactionDateEpochDay: Long,
-    val editingEntry: BusinessEntry? = null
+private data class Composer(
+    val input: String = "",
+    val draft: ParsedEntry? = null,
+    val editing: BusinessEntry? = null
 )
 
+/**
+ * The entry screen is a conversation: you type a sentence, [EntryParser] reads what it can, and the
+ * reading is only stored once you confirm it.
+ *
+ * A draft whose amount could not be read is not confirmable, so the next message is taken as the
+ * answer to "how much?". That fallback is what keeps a rule parser usable before it is good at
+ * every phrasing, and it is also what makes the local model optional later.
+ */
 class BusinessEntryViewModel(
     private val repository: BusinessEntryRepository,
     private val clock: Clock = Clock.systemDefaultZone()
 ) : ViewModel() {
 
-    private val form = MutableStateFlow(EntryForm(transactionDateEpochDay = todayEpochDay()))
+    private val composer = MutableStateFlow(Composer())
     private val isSaving = MutableStateFlow(false)
     private val message = MutableStateFlow<EntryMessage?>(null)
 
     val uiState: StateFlow<BusinessEntryUiState> = combine(
         repository.allEntries,
-        form,
+        composer,
         isSaving,
         message
-    ) { entries, currentForm, saving, currentMessage ->
+    ) { entries, currentComposer, saving, currentMessage ->
         BusinessEntryUiState(
-            entries = entries,
-            text = currentForm.text,
-            amountInput = currentForm.amountInput,
-            type = currentForm.type,
-            transactionDateEpochDay = currentForm.transactionDateEpochDay,
-            editingId = currentForm.editingEntry?.id,
+            entries = entries.reversed(),
+            input = currentComposer.input,
+            draft = currentComposer.draft,
+            editingId = currentComposer.editing?.id,
             isSaving = saving,
             message = currentMessage
         )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = BusinessEntryUiState(transactionDateEpochDay = todayEpochDay())
+        initialValue = BusinessEntryUiState()
     )
 
-    fun onTextChange(value: String) {
-        form.value = form.value.copy(text = value)
+    fun onInputChange(value: String) {
+        composer.value = composer.value.copy(input = value)
         message.value = null
     }
 
-    fun onAmountChange(value: String) {
-        form.value = form.value.copy(amountInput = value)
+    fun send() {
+        val sent = composer.value.input.trim()
+        if (sent.isEmpty()) {
+            message.value = EntryMessage.EmptyInput
+            return
+        }
+
+        val openDraft = composer.value.draft
+
+        if (openDraft != null && openDraft.amountMinor == null) {
+            acceptAmount(sent, openDraft)
+            return
+        }
+
+        val parsed = EntryParser.parse(sent, today())
+        composer.value = composer.value.copy(input = "", draft = parsed)
+        message.value = if (parsed.amountMinor == null) EntryMessage.AmountNotFound else null
+    }
+
+    fun confirmDraft() {
+        val current = composer.value
+        val draft = current.draft ?: return
+
+        if (draft.amountMinor == null) {
+            message.value = EntryMessage.AmountNotFound
+            return
+        }
+
+        if (isSaving.value) return
+        isSaving.value = true
+
+        val existing = current.editing
+        val date = draft.transactionDate ?: today()
+
+        viewModelScope.launch {
+            try {
+                if (existing != null) {
+                    repository.update(
+                        existing.copy(
+                            rawText = draft.rawText,
+                            amountMinor = draft.amountMinor,
+                            currency = existing.currency ?: DEFAULT_CURRENCY,
+                            type = draft.type,
+                            category = draft.category ?: existing.category,
+                            transactionDateEpochDay = date.toEpochDay(),
+                            transactionDateZone = clock.zone.id,
+                            updatedAt = clock.millis()
+                        )
+                    )
+                    message.value = EntryMessage.Updated
+                } else {
+                    repository.add(
+                        BusinessEntry(
+                            rawText = draft.rawText,
+                            amountMinor = draft.amountMinor,
+                            currency = DEFAULT_CURRENCY,
+                            type = draft.type,
+                            category = draft.category ?: DEFAULT_CATEGORY,
+                            transactionDateEpochDay = date.toEpochDay(),
+                            transactionDateZone = clock.zone.id,
+                            createdAt = clock.millis()
+                        )
+                    )
+                    message.value = EntryMessage.Saved
+                }
+
+                composer.value = Composer()
+            } catch (e: Exception) {
+                message.value = EntryMessage.SaveFailed(e.localizedMessage)
+            } finally {
+                isSaving.value = false
+            }
+        }
+    }
+
+    fun cancelDraft() {
+        composer.value = Composer()
         message.value = null
     }
 
-    fun onDateChange(date: LocalDate) {
-        form.value = form.value.copy(transactionDateEpochDay = date.toEpochDay())
+    fun onDraftTypeChange(type: TransactionType) {
+        val draft = composer.value.draft ?: return
+        composer.value = composer.value.copy(draft = draft.copy(type = type))
         message.value = null
     }
 
-    fun onTypeChange(type: TransactionType) {
-        form.value = form.value.copy(type = type)
+    fun onDraftCategoryChange(category: String) {
+        val draft = composer.value.draft ?: return
+        composer.value = composer.value.copy(draft = draft.copy(category = category))
         message.value = null
     }
 
     fun startEditing(entry: BusinessEntry) {
-        form.value = EntryForm(
-            text = entry.rawText,
-            amountInput = entry.amountMinor?.let { Money.format(it) } ?: "",
-            type = entry.type,
-            transactionDateEpochDay = entry.transactionDateEpochDay ?: todayEpochDay(),
-            editingEntry = entry
+        composer.value = Composer(
+            input = entry.rawText,
+            draft = ParsedEntry(
+                rawText = entry.rawText,
+                amountMinor = entry.amountMinor,
+                type = entry.type,
+                transactionDate = entry.transactionDateEpochDay?.let { LocalDate.ofEpochDay(it) },
+                category = entry.category
+            ),
+            editing = entry
         )
-        message.value = null
-    }
-
-    fun cancelEditing() {
-        form.value = clearedForm(form.value)
         message.value = null
     }
 
@@ -122,8 +204,8 @@ class BusinessEntryViewModel(
         viewModelScope.launch {
             try {
                 repository.delete(entry)
-                if (form.value.editingEntry?.id == entry.id) {
-                    form.value = clearedForm(form.value)
+                if (composer.value.editing?.id == entry.id) {
+                    composer.value = Composer()
                 }
                 message.value = EntryMessage.Deleted
             } catch (e: Exception) {
@@ -134,75 +216,26 @@ class BusinessEntryViewModel(
         }
     }
 
-    fun save() {
-        val current = form.value
-        val trimmed = current.text.trim()
+    private fun acceptAmount(answer: String, draft: ParsedEntry) {
+        val amountMinor = EntryParser.parse(answer, today()).amountMinor
+            ?: Money.parseMinorUnits(answer)
 
-        if (trimmed.isEmpty()) {
-            message.value = EntryMessage.EmptyInput
-            return
-        }
-
-        val amountWasGiven = current.amountInput.isNotBlank()
-        val amountMinor = if (amountWasGiven) Money.parseMinorUnits(current.amountInput) else null
-
-        if (amountWasGiven && amountMinor == null) {
+        if (amountMinor == null) {
             message.value = EntryMessage.AmountInvalid
             return
         }
 
-        if (isSaving.value) return
-        isSaving.value = true
-
-        val existing = current.editingEntry
-
-        viewModelScope.launch {
-            try {
-                if (existing != null) {
-                    repository.update(
-                        existing.copy(
-                            rawText = trimmed,
-                            amountMinor = amountMinor,
-                            currency = currencyFor(amountMinor, existing.currency),
-                            type = current.type,
-                            transactionDateEpochDay = current.transactionDateEpochDay,
-                            transactionDateZone = clock.zone.id,
-                            updatedAt = clock.millis()
-                        )
-                    )
-                } else {
-                    repository.add(
-                        BusinessEntry(
-                            rawText = trimmed,
-                            amountMinor = amountMinor,
-                            currency = currencyFor(amountMinor, null),
-                            type = current.type,
-                            transactionDateEpochDay = current.transactionDateEpochDay,
-                            transactionDateZone = clock.zone.id,
-                            createdAt = clock.millis()
-                        )
-                    )
-                }
-
-                form.value = clearedForm(current)
-                message.value = if (existing != null) EntryMessage.Updated else EntryMessage.Saved
-            } catch (e: Exception) {
-                message.value = EntryMessage.SaveFailed(e.localizedMessage)
-            } finally {
-                isSaving.value = false
-            }
-        }
+        composer.value = composer.value.copy(
+            input = "",
+            draft = draft.copy(
+                rawText = "${draft.rawText} $answer",
+                amountMinor = amountMinor
+            )
+        )
+        message.value = null
     }
 
-    private fun currencyFor(amountMinor: Long?, existingCurrency: String?): String? =
-        if (amountMinor == null) null else existingCurrency ?: DEFAULT_CURRENCY
-
-    private fun clearedForm(current: EntryForm): EntryForm = EntryForm(
-        type = current.type,
-        transactionDateEpochDay = current.transactionDateEpochDay
-    )
-
-    private fun todayEpochDay(): Long = LocalDate.now(clock).toEpochDay()
+    private fun today(): LocalDate = LocalDate.now(clock)
 
     companion object {
         fun factory(repository: BusinessEntryRepository): ViewModelProvider.Factory =

@@ -1,11 +1,12 @@
 <resources>
     <!-- Transaction entry screen -->
-    <string name="amount_label">Amount</string>
-    <string name="amount_placeholder">e.g. 5000</string>
+    <string name="action_send">Send</string>
+    <string name="ask_amount">How much? Please type just the number.</string>
+    <string name="draft_amount">Amount: %1$s</string>
+    <string name="draft_category">Category: %1$s</string>
     <string name="date_field">Date: %1$s</string>
     <string name="screen_title">My Business Ledger</string>
     <string name="entry_hint">Write your entry in Bangla or Banglish</string>
-    <string name="entry_label">Entry details</string>
     <string name="entry_placeholder">e.g. Bought cloth for 5000 taka today</string>
     <string name="action_save">Save entry</string>
     <string name="saving_in_progress">Saving...</string>
@@ -23,7 +24,6 @@
 
     <!-- Result messages -->
     <string name="error_amount_invalid">Enter a valid amount</string>
-    <string name="action_ok">OK</string>
     <string name="action_cancel">Cancel</string>
     <string name="error_empty_entry">Please write an entry first</string>
     <string name="save_success">Entry saved successfully</string>
@@ -39,6 +39,5 @@
     <string name="delete_success">Entry deleted</string>
 
     <!-- Entry list -->
-    <string name="entry_list_header">Entries (%1$d)</string>
     <string name="empty_state">No entries yet.</string>
 </resources>

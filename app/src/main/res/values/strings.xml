@@ -2,12 +2,13 @@
     <string name="app_name">BizEntry</string>
 
     <!-- Transaction entry screen -->
-    <string name="amount_label">টাকার পরিমাণ</string>
-    <string name="amount_placeholder">যেমন: ৫০০০</string>
+    <string name="action_send">পাঠান</string>
+    <string name="ask_amount">কত টাকার হিসাব? শুধু সংখ্যাটি লিখুন।</string>
+    <string name="draft_amount">টাকা: %1$s</string>
+    <string name="draft_category">খাত: %1$s</string>
     <string name="date_field">তারিখ: %1$s</string>
     <string name="screen_title">আমার ব্যবসার হিসাব</string>
     <string name="entry_hint">বাংলা অথবা Banglish-এ হিসাব লিখুন</string>
-    <string name="entry_label">হিসাবের বিবরণ</string>
     <string name="entry_placeholder">যেমন: আজ ৫০০০ টাকার কাপড় কিনেছি</string>
     <string name="action_save">হিসাব Save করুন</string>
     <string name="saving_in_progress">সংরক্ষণ হচ্ছে...</string>
@@ -25,7 +26,6 @@
 
     <!-- Result messages -->
     <string name="error_amount_invalid">টাকার পরিমাণ ঠিকভাবে লিখুন</string>
-    <string name="action_ok">ঠিক আছে</string>
     <string name="action_cancel">বাতিল</string>
     <string name="error_empty_entry">আগে হিসাব লিখুন</string>
     <string name="save_success">হিসাব সফলভাবে সংরক্ষিত হয়েছে</string>
@@ -41,6 +41,5 @@
     <string name="delete_success">এন্ট্রি মুছে ফেলা হয়েছে</string>
 
     <!-- Entry list -->
-    <string name="entry_list_header">এন্ট্রির তালিকা (%1$d)</string>
     <string name="empty_state">এখনো কোনো হিসাব এন্ট্রি করা হয়নি।</string>
 </resources>

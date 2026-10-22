@@ -5,6 +5,8 @@ import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
+const val DEFAULT_CATEGORY = "অন্যান্য"
+
 @Entity(
     tableName = "business_entries",
     indices = [
@@ -24,7 +26,7 @@ data class BusinessEntry(
 
     val type: TransactionType = TransactionType.UNKNOWN,
 
-    val category: String = "অন্যান্য",
+    val category: String = DEFAULT_CATEGORY,
 
     val transactionDate: String = "",
 
