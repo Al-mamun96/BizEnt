@@ -13,6 +13,18 @@ interface BusinessEntryRepository {
     suspend fun delete(entry: BusinessEntry)
 
     suspend fun findPossibleDuplicates(rawText: String, sinceMillis: Long): List<BusinessEntry>
+
+    suspend fun sumInRange(fromEpochDay: Long, toEpochDay: Long): Long?
+
+    suspend fun sumByType(type: TransactionType, fromEpochDay: Long, toEpochDay: Long): Long?
+
+    suspend fun sumBySettlement(
+        settlement: Settlement,
+        fromEpochDay: Long,
+        toEpochDay: Long
+    ): Long?
+
+    suspend fun totalsByCategory(fromEpochDay: Long, toEpochDay: Long): List<CategoryTotal>
 }
 
 class RoomBusinessEntryRepository(private val dao: BusinessEntryDao) : BusinessEntryRepository {
@@ -29,4 +41,24 @@ class RoomBusinessEntryRepository(private val dao: BusinessEntryDao) : BusinessE
         rawText: String,
         sinceMillis: Long
     ): List<BusinessEntry> = dao.findPossibleDuplicates(rawText, sinceMillis)
+
+    override suspend fun sumInRange(fromEpochDay: Long, toEpochDay: Long): Long? =
+        dao.sumAmountMinorInRange(fromEpochDay, toEpochDay)
+
+    override suspend fun sumByType(
+        type: TransactionType,
+        fromEpochDay: Long,
+        toEpochDay: Long
+    ): Long? = dao.sumAmountMinorByType(type, fromEpochDay, toEpochDay)
+
+    override suspend fun sumBySettlement(
+        settlement: Settlement,
+        fromEpochDay: Long,
+        toEpochDay: Long
+    ): Long? = dao.sumAmountMinorBySettlement(settlement, fromEpochDay, toEpochDay)
+
+    override suspend fun totalsByCategory(
+        fromEpochDay: Long,
+        toEpochDay: Long
+    ): List<CategoryTotal> = dao.totalsByCategory(fromEpochDay, toEpochDay)
 }

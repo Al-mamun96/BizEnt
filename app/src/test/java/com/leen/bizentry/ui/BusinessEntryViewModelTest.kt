@@ -2,6 +2,7 @@ package com.leen.bizentry.ui
 
 import com.leen.bizentry.data.BusinessEntry
 import com.leen.bizentry.data.BusinessEntryRepository
+import com.leen.bizentry.data.CategoryTotal
 import com.leen.bizentry.data.Settlement
 import com.leen.bizentry.data.TransactionType
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -375,4 +376,23 @@ private class FakeBusinessEntryRepository : BusinessEntryRepository {
     }
 
     fun stored(): List<BusinessEntry> = entries.value
+
+    override suspend fun sumInRange(fromEpochDay: Long, toEpochDay: Long): Long? = null
+
+    override suspend fun sumByType(
+        type: TransactionType,
+        fromEpochDay: Long,
+        toEpochDay: Long
+    ): Long? = null
+
+    override suspend fun sumBySettlement(
+        settlement: Settlement,
+        fromEpochDay: Long,
+        toEpochDay: Long
+    ): Long? = null
+
+    override suspend fun totalsByCategory(
+        fromEpochDay: Long,
+        toEpochDay: Long
+    ): List<CategoryTotal> = emptyList()
 }

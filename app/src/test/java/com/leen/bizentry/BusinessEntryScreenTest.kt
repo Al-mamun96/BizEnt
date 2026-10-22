@@ -9,6 +9,8 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import com.leen.bizentry.data.BusinessEntry
 import com.leen.bizentry.data.BusinessEntryRepository
+import com.leen.bizentry.data.CategoryTotal
+import com.leen.bizentry.data.Settlement
 import com.leen.bizentry.data.TransactionType
 import com.leen.bizentry.ui.BusinessEntryViewModel
 import com.leen.bizentry.ui.theme.BizEntryTheme
@@ -141,4 +143,23 @@ private class ScreenFakeRepository : BusinessEntryRepository {
     ): List<BusinessEntry> = emptyList()
 
     fun stored(): List<BusinessEntry> = entries.value
+
+    override suspend fun sumInRange(fromEpochDay: Long, toEpochDay: Long): Long? = null
+
+    override suspend fun sumByType(
+        type: TransactionType,
+        fromEpochDay: Long,
+        toEpochDay: Long
+    ): Long? = null
+
+    override suspend fun sumBySettlement(
+        settlement: Settlement,
+        fromEpochDay: Long,
+        toEpochDay: Long
+    ): Long? = null
+
+    override suspend fun totalsByCategory(
+        fromEpochDay: Long,
+        toEpochDay: Long
+    ): List<CategoryTotal> = emptyList()
 }
