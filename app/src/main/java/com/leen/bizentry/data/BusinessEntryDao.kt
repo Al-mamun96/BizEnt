@@ -52,4 +52,41 @@ interface BusinessEntryDao {
             "ORDER BY createdAt DESC"
     )
     suspend fun findPossibleDuplicates(rawText: String, sinceMillis: Long): List<BusinessEntry>
+
+    @Query(
+        "SELECT SUM(amountMinor) FROM business_entries " +
+            "WHERE transactionDateEpochDay BETWEEN :fromEpochDay AND :toEpochDay"
+    )
+    suspend fun sumAmountMinorInRange(fromEpochDay: Long, toEpochDay: Long): Long?
+
+    @Query(
+        "SELECT SUM(amountMinor) FROM business_entries " +
+            "WHERE type = :type AND transactionDateEpochDay BETWEEN :fromEpochDay AND :toEpochDay"
+    )
+    suspend fun sumAmountMinorByType(
+        type: TransactionType,
+        fromEpochDay: Long,
+        toEpochDay: Long
+    ): Long?
+
+    @Query(
+        "SELECT SUM(amountMinor) FROM business_entries " +
+            "WHERE settlement = :settlement " +
+            "AND transactionDateEpochDay BETWEEN :fromEpochDay AND :toEpochDay"
+    )
+    suspend fun sumAmountMinorBySettlement(
+        settlement: Settlement,
+        fromEpochDay: Long,
+        toEpochDay: Long
+    ): Long?
+
+    @Query("SELECT SUM(amountMinor) FROM business_entries WHERE settlement = :settlement")
+    suspend fun sumAmountMinorBySettlement(settlement: Settlement): Long?
+
+    @Query(
+        "SELECT category, COALESCE(SUM(amountMinor), 0) AS totalMinor FROM business_entries " +
+            "WHERE transactionDateEpochDay BETWEEN :fromEpochDay AND :toEpochDay " +
+            "GROUP BY category ORDER BY totalMinor DESC"
+    )
+    suspend fun totalsByCategory(fromEpochDay: Long, toEpochDay: Long): List<CategoryTotal>
 }
