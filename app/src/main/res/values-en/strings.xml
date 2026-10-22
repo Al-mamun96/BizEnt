@@ -1,5 +1,8 @@
 <resources>
     <!-- Transaction entry screen -->
+    <string name="amount_label">Amount</string>
+    <string name="amount_placeholder">e.g. 5000</string>
+    <string name="date_field">Date: %1$s</string>
     <string name="screen_title">My Business Ledger</string>
     <string name="entry_hint">Write your entry in Bangla or Banglish</string>
     <string name="entry_label">Entry details</string>
@@ -7,11 +10,33 @@
     <string name="action_save">Save entry</string>
     <string name="saving_in_progress">Saving...</string>
 
+    <!-- Transaction types -->
+    <string name="type_field">Type: %1$s</string>
+    <string name="type_sale">Sale</string>
+    <string name="type_purchase">Purchase</string>
+    <string name="type_expense">Expense</string>
+    <string name="type_income">Income</string>
+    <string name="type_payment_in">Money received</string>
+    <string name="type_payment_out">Money paid</string>
+    <string name="type_transfer">Transfer</string>
+    <string name="type_unset">Not set</string>
+
     <!-- Result messages -->
+    <string name="error_amount_invalid">Enter a valid amount</string>
+    <string name="action_ok">OK</string>
+    <string name="action_cancel">Cancel</string>
     <string name="error_empty_entry">Please write an entry first</string>
     <string name="save_success">Entry saved successfully</string>
     <string name="save_failed">Could not save: %1$s</string>
     <string name="error_unknown">Something went wrong</string>
+
+    <!-- Editing and deletion -->
+    <string name="action_update">Update</string>
+    <string name="action_delete">Delete</string>
+    <string name="delete_confirm_title">Confirm</string>
+    <string name="delete_confirm_message">This entry will be deleted. This cannot be undone.</string>
+    <string name="update_success">Entry updated</string>
+    <string name="delete_success">Entry deleted</string>
 
     <!-- Entry list -->
     <string name="entry_list_header">Entries (%1$d)</string>

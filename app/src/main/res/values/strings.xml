@@ -2,6 +2,9 @@
     <string name="app_name">BizEntry</string>
 
     <!-- Transaction entry screen -->
+    <string name="amount_label">টাকার পরিমাণ</string>
+    <string name="amount_placeholder">যেমন: ৫০০০</string>
+    <string name="date_field">তারিখ: %1$s</string>
     <string name="screen_title">আমার ব্যবসার হিসাব</string>
     <string name="entry_hint">বাংলা অথবা Banglish-এ হিসাব লিখুন</string>
     <string name="entry_label">হিসাবের বিবরণ</string>
@@ -9,11 +12,33 @@
     <string name="action_save">হিসাব Save করুন</string>
     <string name="saving_in_progress">সংরক্ষণ হচ্ছে...</string>
 
+    <!-- Transaction types -->
+    <string name="type_field">ধরন: %1$s</string>
+    <string name="type_sale">বিক্রয়</string>
+    <string name="type_purchase">ক্রয়</string>
+    <string name="type_expense">খরচ</string>
+    <string name="type_income">আয়</string>
+    <string name="type_payment_in">টাকা পেয়েছি</string>
+    <string name="type_payment_out">টাকা দিয়েছি</string>
+    <string name="type_transfer">স্থানান্তর</string>
+    <string name="type_unset">অনির্ধারিত</string>
+
     <!-- Result messages -->
+    <string name="error_amount_invalid">টাকার পরিমাণ ঠিকভাবে লিখুন</string>
+    <string name="action_ok">ঠিক আছে</string>
+    <string name="action_cancel">বাতিল</string>
     <string name="error_empty_entry">আগে হিসাব লিখুন</string>
     <string name="save_success">হিসাব সফলভাবে সংরক্ষিত হয়েছে</string>
     <string name="save_failed">সংরক্ষণ হয়নি: %1$s</string>
     <string name="error_unknown">অজানা সমস্যা হয়েছে</string>
+
+    <!-- Editing and deletion -->
+    <string name="action_update">হালনাগাদ করুন</string>
+    <string name="action_delete">মুছে ফেলুন</string>
+    <string name="delete_confirm_title">নিশ্চিত করুন</string>
+    <string name="delete_confirm_message">এই এন্ট্রিটি মুছে ফেলা হবে। এটা ফিরিয়ে আনা যাবে না।</string>
+    <string name="update_success">হিসাব হালনাগাদ হয়েছে</string>
+    <string name="delete_success">এন্ট্রি মুছে ফেলা হয়েছে</string>
 
     <!-- Entry list -->
     <string name="entry_list_header">এন্ট্রির তালিকা (%1$d)</string>
